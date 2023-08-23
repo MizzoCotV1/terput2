@@ -41,52 +41,62 @@
 
                                             if(isset($_POST['register'])){
 
-                                                // filter data yang diinputkan
-                                                $nama = filter_input(INPUT_POST, 'nama', FILTER_SANITIZE_STRING);
-                                                $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
-                                                // enkripsi password
+                                                $nama = $_POST['nama']; 
+                                                $username = $_POST['username']; 
+                                                $email = $_POST['email'];   
                                                 $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
-                                                $cpassword = password_hash($_POST["cpassword"], PASSWORD_DEFAULT);
-                                                $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
-
-                                                if(isset($_POST['hak_akses'])) {
-                                                    $hakAkses = $_POST['hak_akses'];
-                                                } 
-                                                if (empty($nama) || empty($username) || empty($_POST["password"]) || empty($email) || empty($_POST["hak_akses"])) {
-                                                    $error = "Form kosong";
-                                                    echo "<script>formkosong();</script>";
+                                                $password1 = password_hash($_POST["cpassword"], PASSWORD_DEFAULT);
+                                                $hakakses = $_POST['hakakses'];
+                                                
+                                                //Verifcation 
+                                                if (empty($nama) || empty($username) || empty($email) || empty($password) || empty($password1) || empty($_POST["hak_akses"])){
+                                                    $error = "Complete all fields";
                                                 }
-                                                if ($_POST["password"] !== $_POST["cpassword"]) {
-                                                    echo "<script>cpassworderror();</script>";
-                                                    $error = "Password tidak sama";
+                                                
+                                                // Password match
+                                                if (($_POST["password"]) !== ($_POST["cpassword"])){
+                                                    $error = "Passwords don't match";
                                                 }
+                                                
+                                                // Email validation
+                                                
+                                                if (!filter_var($email, FILTER_VALIDATE_EMAIL)){
+                                                    $error = "Enter a  valid email";
+                                                }
+                                                
+                                                // Password length
+                                                if (strlen($password) <= 6){
+                                                    $error = "Choose a password longer then 6 character";
+                                                }
+                                                
                                                 if(!isset($error)){
-                                                    //no error
-                                                        $sthandler = $conn->prepare("SELECT username FROM user WHERE username = :username");
-                                                        $sthandler->bindParam(':username', $username);
-                                                        $sthandler->execute();
+                                                //no error
+                                                    $sthandler = $conn->prepare("SELECT username FROM user WHERE username = :username");
+                                                    $sthandler->bindParam(':username', $username);
+                                                    $sthandler->execute();
+                                                    
+                                                    if($sthandler->rowCount() > 0){
+                                                        echo "exists! cannot insert";
+                                                    } else {
+                                                            //Securly insert into database
+                                                            $sql = 'INSERT INTO user (nama ,username, email, password, hak_akses) VALUES (:nama,:username,:email,:password,:hak_akses)';    
+                                                            $query = $conn->prepare($sql);
                                                         
-                                                        if($sthandler->rowCount() > 0){
-                                                            echo "exists! cannot insert";
-                                                            echo "<script>usernameexist();</script>";
-                                                        } else {
-                                                                //Securly insert into database
-                                                                $sql = 'INSERT INTO user (nama ,username, email, password, hak_akses) VALUES (:nama,:username,:email,:password,:hak_akses)';    
-                                                                $query = $conn->prepare($sql);
-                                                            
-                                                                $query->execute(array(
-                                                            
-                                                                    ":nama" => $nama,
-                                                                    ":username" => $username,
-                                                                    ":password" => $password,
-                                                                    ":email" => $email,
-                                                                    ":hak_akses" => $hakAkses
-                                                            
-                                                                ));
-                                                        }
+                                                            $query->execute(array(
+                                                        
+                                                            ':nama' => $nama,
+                                                            ':username' => $username,
+                                                            ':email' => $email,
+                                                            ':password' => $password,
+                                                            ':hak_akses' => $hakakses
+                                                        
+                                                            ));
                                                     }
+                                                } else {
+                                                    echo "error occured: ".$error;
+                                                    exit();
+                                                }
                                             }
-
                                             ?>
                                             <form action="" method="POST">
                                                 <div class="row">
@@ -111,8 +121,8 @@
                                                         <label class="mx-2" for="floatingInput">Email address</label>
                                                     </div>
                                                     <div>
-                                                        <select name="hak_akses" class="form-select form-select mb-3" aria-label=".form-select-lg example">
-                                                            <option selected hidden disabled>Hak Akses</option>
+                                                        <select name="hakakses" class="form-select form-select mb-3" aria-label=".form-select-lg example">
+                                                            <option disabled selected value>Hak Akses</option>
                                                             <option value="Admin">Admin</option>
                                                             <option value="Operator">Operator</option>
                                                         </select>

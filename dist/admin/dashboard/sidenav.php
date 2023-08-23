@@ -63,7 +63,7 @@
                             </div>
                             <div class="sb-sidenav-menu-heading">Setting User</div>
                             <a class="nav-link" href="register.php">
-                                <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
+                                <div class="sb-nav-link-icon"><i class="fa-solid fa-user-pen"></i></i></div>
                                 Registrasi User
                             </a>
                             <a class="nav-link" href="tables.html">
