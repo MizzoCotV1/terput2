@@ -67,7 +67,6 @@
                                                         $sthandler->execute();
                                                         
                                                         if($sthandler->rowCount() > 0){
-                                                            echo "exists! cannot insert";
                                                             echo "<script>usernameexist();</script>";
                                                         } else {
                                                                 //Securly insert into database
