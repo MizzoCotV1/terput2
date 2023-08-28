@@ -72,7 +72,7 @@
                                                                 //Securly insert into database
                                                                 $sql = 'INSERT INTO user (nama ,username, email, password, hak_akses) VALUES (:nama,:username,:email,:password,:hak_akses)';    
                                                                 $query = $conn->prepare($sql);
-                                                            
+
                                                                 $query->execute(array(
                                                             
                                                                     ":nama" => $nama,
@@ -83,6 +83,7 @@
                                                             
                                                                 ));
                                                         }
+                                                        
                                                     }
                                             }
 
@@ -112,8 +113,8 @@
                                                     <div>
                                                         <select name="hak_akses" class="form-select form-select mb-3" aria-label=".form-select-lg example">
                                                             <option selected hidden disabled>Hak Akses</option>
-                                                            <option value="Admin">Admin</option>
-                                                            <option value="Operator">Operator</option>
+                                                            <option value="admin">Admin</option>
+                                                            <option value="operator">Operator</option>
                                                         </select>
                                                     </div>
                                                     <div class="col-6">

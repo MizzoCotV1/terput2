@@ -23,8 +23,6 @@
     <body class="sb-nav-fixed">
         <?php include 'navbar.php' ?>
 
-        <?php include 'sidenav.php' ?>
-
             <div id="layoutSidenav_content">
                 <main>
                     <div class="container-fluid px-4">

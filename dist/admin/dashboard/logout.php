@@ -8,9 +8,4 @@ session_destroy();
 setcookie('id', '', time() - 3600);
 setcookie('key', '', time() - 3600);
 
-echo "
-    <script>
-        alert('Log Out Sukses!');
-        document.location.href='login.php';
-    </script>
-    ";
+header("Location: http://localhost/terput2/dist/admin/login.php");

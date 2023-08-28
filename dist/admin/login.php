@@ -1,77 +1,137 @@
- <!DOCTYPE html>  
- <html>  
-      <head>  
-            <title>Login | Admin</title> 
-            <meta charset="utf-8" />
-            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-            <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-            <meta name="description" content="" />
-            <meta name="author" content="" />
-            <title>Dashboard - Webkolah</title>
-            <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
-            <link href="dashboard/css/styles.css" rel="stylesheet" />
-            <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-            <script>
-                function formregkos(){
-                    swal.fire({
-                    title: "Form login kosong",
-                    icon: 'error',
-                    text: "Harap diisi",
-                    timer: 2000,
-                    showConfirmButton: false
-                    }, function(){
-                        location.reload();
-                    });
+<?php  
+    session_start();
+    require_once("dashboard/conn.php");
+       
+       //cek cookie
+        if (isset($_COOKIE['id']) && isset($_COOKIE['key'])) {
+            $id = $_COOKIE['id'];
+            $key = $_COOKIE['key'];
+        
+            $db = $conn->prepare("SELECT * FROM `user` WHERE id_user = '$id'");
+            $db->execute([$email, $pass]);
+
+            $row = $db->fetch(PDO::FETCH_ASSOC);
+
+            //cek cookie dengan username
+            if ($key === hash('sha256', $row['username'])) {
+            $_SESSION['login'] = true;
+            }
+        }
+        
+        //masuk ke session
+        if (isset($_SESSION["login"])) {
+            header("Location: dashboard/");
+        }
+        //cek username dan password
+        if (isset($_POST['login'])) {
+            $username = htmlspecialchars($_POST["username"]);
+            $password = htmlspecialchars($_POST["password"]);
+            
+            try {
+                $sql = "SELECT * FROM user WHERE username = :username";
+
+                // Menyiapkan prepared statement
+                $stmt = $conn->prepare($sql);
+            
+                // Mengikat nilai ke placeholder
+                $stmt->bindParam(':username', $username, PDO::PARAM_STR);
+            
+                // Menjalankan prepared statement
+                $stmt->execute();
+            
+                // Mendapatkan hasil dalam bentuk array asosiatif
+                $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+                if (count($result) === 1) {
+                    $row = $result[0];
+            
+                    if (password_verify($password, $row['password'])) {
+                        // Cek hak akses
+                        if ($row['hak_akses'] == 'admin') {
+                            $_SESSION['nama'] = $row['nama'];
+                            $_SESSION['id_user'] = $row['id_user'];
+                            $_SESSION['username'] = $username;
+                            $_SESSION['hak_akses'] = 'admin';
+            
+                            // Cek dan buat session
+                            $_SESSION['login'] = true;
+            
+                            // Buat dan cek cookie
+                            if (isset($_POST['remember'])) {
+                                setcookie('id', $row['id_user'], time() + 60);
+                                setcookie('key', hash('sha256', $row['username']), time() + 60);
+                            }
+            
+                            echo "<script>alert('Login Admin Berhasil!');
+                                document.location.href='index.php';</script>";
+                        } else if ($row['hak_akses'] == 'operator') {
+                            $_SESSION['nama'] = $row['nama'];
+                            $_SESSION['id_user'] = $row['id_user'];
+                            $_SESSION['username'] = $username;
+                            $_SESSION['hak_akses'] = 'operator';
+            
+                            // Cek dan buat session
+                            $_SESSION['login'] = true;
+            
+                            // Buat dan cek cookie
+                            if (isset($_POST['remember'])) {
+                                setcookie('id', $row['id_user'], time() + 60);
+                                setcookie('key', hash('sha256', $row['username']), time() + 60);
+                            }
+            
+                            echo "<script>
+                                    alert('Login Operator Berhasil!');
+                                    document.location.href='index.php';
+                                </script>";
+                        }
+                    } else {
+                        $_SESSION['username'] = '';
+                        $_SESSION['hak_akses'] = '';
+                        echo "<script> alert('Login Gagal!');
+                            document.location.href='login.php';</script>";
+                    }
+                } else {
+                    $_SESSION['username'] = '';
+                    $_SESSION['hak_akses'] = '';
+                    echo "<script> alert('Login Gagal!');
+                        document.location.href='login.php';</script>";
                 }
-            </script>
-        <body>
-        <?php  
-            session_start();  
-            include 'dashboard/conn.php';
-            try {   
-                if(isset($_POST["login"])) {  
-                    if(empty($_POST["username"]) || empty($_POST["password"])) {  
-                        echo '<script>
-                            formregkos();
-                        </script>';
-                    } else {  
-                            $query = "SELECT * FROM user WHERE username = :username AND password = :password";  
-                            $statement = $conn->prepare($query);  
-                            $statement->execute(  
-                                array(  
-                                    'username'     =>     $_POST["username"],  
-                                    'password'     =>     $_POST["password"]  
-                                )  
-                            );  
-                            $count = $statement->rowCount();  
-                            if($count > 0)  {  
-                                $_SESSION["username"] = $_POST["username"];  
-                                header("location:dashboard/");  
-                                echo "<script>
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Berhasil',
-                                    text: 'Berhasil Login',
-                                });
-                                </script>";
-                            } else {  
-                                echo "<script>
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Gagal terkirim',
-                                    text: 'Username atau Password salah!.',
-                                });
-                                </script>";
-                            }  
-                    }  
-                }  
-            }  
-            catch(PDOException $error) {  
-                $message = $error->getMessage();  
-            }  
-        ?>
-        <div class="row">
+            } catch (PDOException $e) {
+                echo "Error: " . $e->getMessage();
+            }
+            
+        
+            $error = true;
+       }
+?>
+<!DOCTYPE html>  
+<html>  
+    <head>  
+        <title>Login | Admin</title> 
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        <title>Dashboard - Webkolah</title>
+        <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
+        <link href="dashboard/css/styles.css" rel="stylesheet" />
+        <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <body>
+    <?php
+   if(isset($message)){
+      foreach($message as $message){
+         echo '
+         <div class="message">
+            <span>'.$message.'</span>
+            <i class="fas fa-times" onclick="this.parentElement.remove();"></i>
+         </div>
+         ';
+      }
+   }
+?>
+    <div class="row">
             <div class="container mt-5 px-3 py-3 card col-5">
                 <div class="card-body mt-2">
                     <div class="text-center mb-4 fs-3 fw-semibold">
@@ -93,9 +153,6 @@
                 </div>
             </div>
         </div>
-        <!-- Section: Design Block -->
-           
-
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
         <script src="dashboardjs/scripts.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
